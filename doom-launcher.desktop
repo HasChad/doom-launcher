@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Doom Launcher
-Comment=Launcher for DooM source ports
+Comment=Launcher for playing DooM mods and maps with your choice of source-port
 Exec=doom-launcher
 Icon=doom-launcher
 Type=Application
-Categories=Game;
+Categories=Games;
 Terminal=false
