@@ -1,19 +1,27 @@
 [package]
 name = "doom-launcher"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = "1.0.228"
-serde_json = "1.0.149"
-slint = "1.14.1"
+serde_json = "1.0.150"
+slint = "1.17.1"
 walkdir = "2.5.0"
+rfd = "0.17.2"
+dirs = "6.0.0"
 
 [build-dependencies]
-slint-build = "1.14.1"
+slint-build = "1.17.1"
+winresource = "0.1.31"
 
 [profile.release]
 codegen-units = 1
 lto = true
+
+[package.metadata.appimage]
+# assets = [""]
+icon = "ui/icons/app-icon.png"
+desktop_entry = "doom-launcher.desktop"

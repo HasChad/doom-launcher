@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Doom Launcher
+Comment=Launcher for DooM source ports
+Exec=doom-launcher
+Icon=doom-launcher
+Type=Application
+Categories=Game;
+Terminal=false

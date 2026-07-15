@@ -1,87 +1,308 @@
-component MemoryTile inherits Rectangle {
-    callback clicked;
-    in property <bool> open_curtain;
-    in property <bool> solved;
-    in property <image> icon;
+import {
+    Button,
+    CheckBox,
+    ComboBox,
+    ListView,
+    Palette,
+    VerticalBox,
+    HorizontalBox,
+} from "std-widgets.slint";
 
-    height: 64px;
-    width: 64px;
-    background: solved ? #34CE57 : #3960D5;
-    animate background { duration: 800ms; }
+export struct ModItem {
+    name: string,
+    path: string,
+    enabled: bool,
+}
 
-    Image {
-        source: icon;
-        width: parent.width;
-        height: parent.height;
+component FileListPanel inherits VerticalBox {
+    in property <string> panel-title;
+    in-out property <string> folder-path: "No folder selected";
+    in-out property <[ModItem]> items: [];
+    callback item-toggled(int);
+
+    HorizontalBox {
+        padding: 0px;
+        vertical-stretch: 0;
+        Text {
+            text: panel-title;
+            font-size: 16px;
+        }
+
+        Text {
+            text: folder-path;
+            vertical-alignment: center;
+            overflow: elide;
+            horizontal-stretch: 1;
+        }
     }
 
-    // Left curtain
     Rectangle {
-        background: #193076;
-        x: 0px;
-        width: open_curtain ? 0px : (parent.width / 2);
-        height: parent.height;
-        animate width {
-            duration: 250ms;
-            easing: ease-in;
-        }
-    }
+        background: Palette.background.brighter(25%);
+        vertical-stretch: 1;
+        min-height: 100px;
 
-    // Right curtain
-    Rectangle {
-        background: #193076;
-        x: open_curtain ? parent.width : (parent.width / 2);
-        width: open_curtain ? 0px : (parent.width / 2);
-        height: parent.height;
-        animate width {
-            duration: 250ms;
-            easing: ease-in;
-        }
-        animate x {
-            duration: 250ms;
-            easing: ease-in;
-        }
-    }
+        ListView {
+            for item[i] in items: Rectangle {
+                background: item.enabled ? Palette.accent-background : transparent;
+                border-radius: 4px;
 
-    TouchArea {
-        clicked => {
-            // Delegate to the user of this element
-            root.clicked();
+                TouchArea {
+                    clicked => {
+                        items[i].enabled = !items[i].enabled;
+                        item-toggled(i);
+                    }
+                }
+
+                HorizontalBox {
+                    padding: 4px;
+                    CheckBox {
+                        checked: item.enabled;
+                        toggled => {
+                            items[i].enabled = !items[i].enabled;
+                            item-toggled(i);
+                        }
+                    }
+
+                    Text {
+                        text: item.name;
+                        vertical-alignment: center;
+                        color: item.enabled ? Palette.accent-foreground : Palette.foreground;
+                        opacity: item.enabled ? 1.0 : 0.7;
+                    }
+                }
+            }
         }
     }
 }
 
-struct TileData {
-    image: image,
-    image_visible: bool,
-    solved: bool,
+component NamedListPanel inherits VerticalBox {
+    in property <string> panel-title;
+    in-out property <[string]> names: [];
+    callback add-clicked();
+    callback remove-clicked(int);
+
+    HorizontalBox {
+        padding: 0px;
+        vertical-stretch: 0;
+        Text {
+            text: panel-title;
+            font-size: 16px;
+            horizontal-stretch: 1;
+        }
+
+        Button {
+            text: "+ Add";
+            clicked => {
+                add-clicked();
+            }
+        }
+    }
+
+    Rectangle {
+        background: Palette.background.brighter(25%);
+        vertical-stretch: 1;
+        min-height: 80px;
+
+        ListView {
+            for name[i] in names: HorizontalBox {
+                padding: 4px;
+                Text {
+                    text: name;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                }
+
+                Button {
+                    text: "Remove";
+                    clicked => {
+                        remove-clicked(i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component SettingsWindow inherits Window {
+    title: "Settings";
+    icon: @image-url("icons/app-icon.png");
+    width: 460px;
+
+    in-out property <string> mods-folder: "No folder selected";
+    in-out property <string> maps-folder: "No folder selected";
+    in-out property <[string]> port-names: [];
+    in-out property <[string]> iwad-names: [];
+
+    callback choose-mods-folder-clicked();
+    callback choose-maps-folder-clicked();
+    callback add-port-clicked();
+    callback remove-port-clicked(int);
+    callback add-iwad-clicked();
+    callback remove-iwad-clicked(int);
+
+    VerticalBox {
+        Text {
+            text: "Settings";
+            font-size: 20px;
+        }
+
+        GridLayout {
+            spacing: 8px;
+            Row {
+                Text {
+                    text: "Mods folder:";
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: mods-folder;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                Button {
+                    text: "Choose folder...";
+                    clicked => {
+                        choose-mods-folder-clicked();
+                    }
+                }
+            }
+
+            Row {
+                Text {
+                    text: "Maps folder:";
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: maps-folder;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                Button {
+                    text: "Choose folder...";
+                    clicked => {
+                        choose-maps-folder-clicked();
+                    }
+                }
+            }
+        }
+
+        NamedListPanel {
+            panel-title: "Source ports";
+            names <=> port-names;
+            add-clicked => {
+                root.add-port-clicked();
+            }
+            remove-clicked(index) => {
+                root.remove-port-clicked(index);
+            }
+        }
+
+        NamedListPanel {
+            panel-title: "IWADs";
+            names <=> iwad-names;
+            add-clicked => {
+                root.add-iwad-clicked();
+            }
+            remove-clicked(index) => {
+                root.remove-iwad-clicked(index);
+            }
+        }
+    }
 }
 
 export component MainWindow inherits Window {
-    min-width: 800px;
-    min-height: 600px;
+    title: "Doom Launcher";
+    icon: @image-url("icons/app-icon.png");
+    width: 520px;
+    height: 640px;
 
-    callback check_if_pair_solved();
-    in property <bool> disable_tiles;
+    in-out property <[string]> available-ports: [];
+    in-out property <int> selected-port-index: -1;
 
-    in-out property <[TileData]> memory_tiles: [
-        { image: @image-url("icons/dsda-doom.png") },
-        { image: @image-url("icons/woof.png") },
-    ];
+    in-out property <[string]> available-iwads: [];
+    in-out property <int> selected-iwad-index: -1;
 
-    for tile[i] in memory_tiles: MemoryTile {
-        x: mod(i, 4) * 74px;
-        y: floor(i / 4) * 74px;
-        width: 64px;
-        height: 64px;
-        icon: tile.image;
-        open_curtain: tile.image_visible || tile.solved;
-            // propagate the solved status from the model to the tile
-            solved: tile.solved;
-        clicked => {
-            if (!root.disable_tiles) {
-                tile.image_visible = true;
-                root.check_if_pair_solved();
+    in-out property <string> mods-folder: "No folder selected";
+    in-out property <[ModItem]> mods: [];
+
+    in-out property <string> maps-folder: "No folder selected";
+    in-out property <[ModItem]> maps: [];
+
+    callback settings-clicked();
+    callback launch-clicked();
+    callback mod-item-toggled(int);
+    callback map-item-toggled(int);
+
+    VerticalBox {
+        HorizontalBox {
+            padding: 0px;
+            Text {
+                text: "Doom Launcher";
+                font-size: 24px;
+                horizontal-alignment: center;
+                horizontal-stretch: 1;
+            }
+
+            Button {
+                text: "⚙";
+                clicked => {
+                    settings-clicked();
+                }
+            }
+        }
+
+        GridLayout {
+            spacing: 8px;
+            Row {
+                Text {
+                    text: "Source port:";
+                    vertical-alignment: center;
+                }
+
+                ComboBox {
+                    model: available-ports;
+                    current-index <=> selected-port-index;
+                }
+            }
+
+            Row {
+                Text {
+                    text: "IWAD:";
+                    vertical-alignment: center;
+                }
+
+                ComboBox {
+                    model: available-iwads;
+                    current-index <=> selected-iwad-index;
+                }
+            }
+        }
+
+        FileListPanel {
+            panel-title: "Mods";
+            folder-path <=> mods-folder;
+            items <=> mods;
+            item-toggled(index) => {
+                root.mod-item-toggled(index);
+            }
+        }
+
+        FileListPanel {
+            panel-title: "Maps";
+            folder-path <=> maps-folder;
+            items <=> maps;
+            item-toggled(index) => {
+                root.map-item-toggled(index);
+            }
+        }
+
+        Button {
+            text: "Launch";
+            clicked => {
+                launch-clicked();
             }
         }
     }
